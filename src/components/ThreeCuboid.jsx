@@ -87,7 +87,7 @@ export default function ThreeCuboid(props) {
     
       if (mode() === "explain") {
         setInfo(
-          `Earthquake Details:\nMagnitude: ${feature.properties.mag}\nDepth: ${feature.geometry.coordinates[2]} km`
+          `Earthquake Details:       Magnitude: ${feature.properties.mag}       Depth: ${feature.geometry.coordinates[2]} km`
         );
       } else if (mode() === "compare") {
         if (selected.length < 2) {
@@ -109,12 +109,12 @@ export default function ThreeCuboid(props) {
               eq1.geometry.coordinates[2] - eq2.geometry.coordinates[2]
             );
             setInfo(
-              `Comparison:\nDistance: ${dist.toFixed(
+              `Comparison:       Distance: ${dist.toFixed(
                 2
-              )} km\nMagnitude Difference: ${magDiff.toFixed(
+              )} km       Magnitude Difference: ${magDiff.toFixed(
                 2
-              )}\nDepth Difference: ${depthDiff.toFixed(2)} km`
-            );
+              )}       Depth Difference: ${depthDiff.toFixed(2)} km`
+            );          
     
             // Draw line between the two points
             drawLine(eq1, eq2);
