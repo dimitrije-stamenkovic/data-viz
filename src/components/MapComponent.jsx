@@ -80,7 +80,7 @@ function MapComponent({ onAreaSelect, isSelecting }) {
     // Create a custom control for filters
     const FilterControl = L.Control.extend({
       options: {
-        position: 'topright'  // Changed from 'topleft' to 'topright'
+        position: 'topright'
       },
       
       onAdd: function() {
@@ -91,37 +91,41 @@ function MapComponent({ onAreaSelect, isSelecting }) {
         container.style.maxHeight = '80vh';
         container.style.overflowY = 'auto';
         
+        // Format the current dates from the filter for HTML date inputs
+        const currentFilters = filters();
+        
         container.innerHTML = `
           <h4 style="margin-top: 0;">Earthquake Filters</h4>
           
           <div style="margin-bottom: 10px;">
             <label>Magnitude Range:</label><br>
             <div style="display: flex; justify-content: space-between;">
-              <input id="min-mag" type="number" min="0" max="10" step="0.1" value="${filters().minMagnitude}" style="width: 45%;">
+              <input id="min-mag" type="number" min="0" max="10" step="0.1" value="${currentFilters.minMagnitude}" style="width: 45%;">
               <span>to</span>
-              <input id="max-mag" type="number" min="0" max="10" step="0.1" value="${filters().maxMagnitude}" style="width: 45%;">
+              <input id="max-mag" type="number" min="0" max="10" step="0.1" value="${currentFilters.maxMagnitude}" style="width: 45%;">
             </div>
           </div>
           
           <div style="margin-bottom: 10px;">
             <label>Depth Range (km):</label><br>
             <div style="display: flex; justify-content: space-between;">
-              <input id="min-depth" type="number" min="-10" max="700" step="1" value="${filters().minDepth}" style="width: 45%;">
+              <input id="min-depth" type="number" min="-10" max="700" step="1" value="${currentFilters.minDepth}" style="width: 45%;">
               <span>to</span>
-              <input id="max-depth" type="number" min="-10" max="700" step="1" value="${filters().maxDepth}" style="width: 45%;">
+              <input id="max-depth" type="number" min="-10" max="700" step="1" value="${currentFilters.maxDepth}" style="width: 45%;">
             </div>
           </div>
           
           <div style="margin-bottom: 10px;">
             <label>Date Range:</label><br>
             <div style="display: flex; justify-content: space-between;">
-              <input id="start-date" type="date" value="${filters().startDate}" style="width: 45%;">
+              <input id="start-date" type="date" value="${currentFilters.startDate}" style="width: 45%;">
               <span>to</span>
-              <input id="end-date" type="date" value="${filters().endDate}" style="width: 45%;">
+              <input id="end-date" type="date" value="${currentFilters.endDate}" style="width: 45%;">
             </div>
           </div>
           
           <button id="apply-filters" style="width: 100%; padding: 5px;">Apply Filters</button>
+          <div id="filter-status" style="margin-top: 5px; font-size: 12px; color: #666;"></div>
         `;
         
         L.DomEvent.disableClickPropagation(container);
@@ -129,24 +133,45 @@ function MapComponent({ onAreaSelect, isSelecting }) {
         
         setTimeout(() => {
           const applyButton = document.getElementById('apply-filters');
+          const statusDiv = document.getElementById('filter-status');
+          
           if (applyButton) {
             applyButton.addEventListener('click', () => {
+              const startDateInput = document.getElementById('start-date');
+              const endDateInput = document.getElementById('end-date');
+              
               const newFilters = {
                 minMagnitude: parseFloat(document.getElementById('min-mag').value),
                 maxMagnitude: parseFloat(document.getElementById('max-mag').value),
                 minDepth: parseFloat(document.getElementById('min-depth').value),
                 maxDepth: parseFloat(document.getElementById('max-depth').value),
-                startDate: document.getElementById('start-date').value,
-                endDate: document.getElementById('end-date').value
+                startDate: startDateInput.value,
+                endDate: endDateInput.value
               };
               
+              // Debug info
+              if (statusDiv) {
+                statusDiv.textContent = `Applying date range: ${newFilters.startDate} to ${newFilters.endDate}`;
+              }
+              
+              // Store the previous filters for comparison
+              const prevFilters = filters();
+              
+              // Update filters state
               setFilters(newFilters);
               
-              if (newFilters.startDate !== filters().startDate || 
-                  newFilters.endDate !== filters().endDate) {
+              // Check if date range has changed
+              if (newFilters.startDate !== prevFilters.startDate || 
+                  newFilters.endDate !== prevFilters.endDate) {
+                if (statusDiv) {
+                  statusDiv.textContent += " - Fetching new data...";
+                }
                 // If date range changed, fetch new data
                 fetchEarthquakeData();
               } else {
+                if (statusDiv) {
+                  statusDiv.textContent += " - Applying filters to existing data";
+                }
                 // Otherwise just apply filters to existing data
                 applyFilters();
               }
